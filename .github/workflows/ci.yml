@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 20 is the README's stated minimum; 22 is the current LTS.
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+      # Without an app ID the page prerenders the setup screen.
+      - name: build without an app ID
+        run: npm run build
+
+      # With one, it prerenders through PrivyProvider. Privy only checks the
+      # ID's length at build time, so a placeholder exercises that path
+      # without needing a real app.
+      - name: build with a placeholder app ID
+        run: npm run build
+        env:
+          NEXT_PUBLIC_PRIVY_APP_ID: ciplaceholder000000000000
