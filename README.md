@@ -184,6 +184,16 @@ You can customize Privy behavior in `app/providers.tsx`:
 - [Privy Documentation](https://docs.privy.io/)
 - [Privy React Guide](https://docs.privy.io/basics/react/installation)
 
+## Updating dependencies
+
+Regenerate `package-lock.json` with npm 10:
+
+```bash
+npx npm@10 install
+```
+
+Node 20 and 22 ship npm 10, and a lockfile written by npm 11 fails `npm ci` on them. CI builds on both, so it will catch this if it happens.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
