@@ -1,7 +1,7 @@
 "use client";
 
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 export default function Home() {
   const { ready, authenticated, user, login, logout } = usePrivy();
@@ -35,11 +35,19 @@ export default function Home() {
         authenticated,
         ready,
       };
-      console.log("=== PRIVY RESPONSE DATA ===", responseData);
       return responseData;
     }
     return null;
   }, [ready, authenticated, user, wallets, walletsReady]);
+
+  // The response holds the user's email, Google identity and wallet
+  // addresses. Logging it is useful while you're building and a leak once
+  // you've shipped, so it only happens in development.
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development" && loginResponse) {
+      console.log("=== PRIVY RESPONSE DATA ===", loginResponse);
+    }
+  }, [loginResponse]);
 
   if (!ready) {
     return (
