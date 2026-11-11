@@ -7,12 +7,12 @@ A Next.js application integrated with Privy authentication, featuring Google sig
 - Google OAuth sign-in via Privy
 - Automatic embedded wallet creation for users without wallets
 - Complete user and wallet data display
-- Full Privy response data logging and visualization
+- Full Privy response data visualization, with console logging in development only
 - Support for multiple login methods (Google, Email, Wallet)
 
 ## Prerequisites
 
-- Node.js 18+ installed
+- Node.js 20.9 or later (required by Next.js 16)
 - A Privy account and App ID ([Get one here](https://privy.io))
 
 ## Setup Instructions
@@ -28,13 +28,17 @@ A Next.js application integrated with Privy authentication, featuring Google sig
 
 ### 2. Configure Environment Variables
 
-Create a `.env.local` file in the root directory:
+Copy the example file and add your App ID:
 
 ```bash
-NEXT_PUBLIC_PRIVY_APP_ID=your_privy_app_id_here
+cp .env.example .env.local
 ```
 
-**Important:** Replace `your_privy_app_id_here` with your actual Privy App ID from the dashboard.
+```bash
+NEXT_PUBLIC_PRIVY_APP_ID=your_25_character_app_id
+```
+
+If the ID is missing or the wrong length, the app shows setup steps instead of starting Privy, so it still builds and runs while you get one.
 
 ### 3. Install Dependencies
 
@@ -70,7 +74,7 @@ After login, the application captures and displays:
 - **Google Account**: Email, name, and subject from Google OAuth
 
 All response data is:
-- Logged to the browser console (check DevTools)
+- Logged to the browser console in development (check DevTools). It contains the user's email and wallet addresses, so it's stripped from production builds
 - Displayed in a JSON format on the page
 - Available via the `usePrivy` and `useWallets` hooks
 
@@ -79,7 +83,8 @@ All response data is:
 - **`app/providers.tsx`**: PrivyProvider wrapper with configuration
   - Enables Google login
   - Auto-creates wallets for users without wallets
-  - Configures appearance and supported chains
+  - Configures appearance
+  - Shows setup steps instead of starting Privy when the App ID is missing or malformed
 
 - **`app/page.tsx`**: Main page component
   - Login/logout UI
@@ -114,7 +119,7 @@ function MyComponent() {
 {
   user: {
     id: string;                    // Privy DID
-    createdAt: string;             // ISO 8601 timestamp
+    createdAt: Date;               // shown as an ISO 8601 string in the JSON panel
     linkedAccounts: Array;         // All linked accounts
     wallet: {                      // Primary wallet
       address: string;
@@ -128,7 +133,12 @@ function MyComponent() {
       subject: string;
     };
   };
-  wallets: Array;                  // All connected wallets
+  wallets: Array<{                 // Connected Ethereum wallets (useWallets)
+    address: string;
+    type: "ethereum";
+    walletClientType: string;
+    connectorType: string;
+  }>;
   authenticated: boolean;
   ready: boolean;
 }
@@ -141,20 +151,23 @@ You can customize Privy behavior in `app/providers.tsx`:
 - **Login Methods**: Add/remove login options
 - **Wallet Creation**: Change when wallets are created (`createOnLogin`)
 - **Appearance**: Customize theme, colors, logo
-- **Chains**: Configure supported blockchains
+- **Chains**: Not configured by default; see Privy's [network configuration](https://docs.privy.io/basics/react/advanced/configuring-evm-networks) to add one
 
 ## Documentation
 
 - [Privy React Setup](https://docs.privy.io/basics/react/setup)
 - [Privy Documentation](https://docs.privy.io/)
 - [Privy User Object](https://docs.privy.io/user-management/users/the-user-object)
-- [Embedded Wallets](https://docs.privy.io/guide/react/wallets/embedded/creation)
+- [Embedded Wallets](https://docs.privy.io/basics/react/advanced/automatic-wallet-creation)
 
 ## Troubleshooting
 
-### "App ID is required" error
-- Make sure `.env.local` exists with `NEXT_PUBLIC_PRIVY_APP_ID` set
-- Restart the dev server after adding environment variables
+### "Add your Privy app ID" screen
+- Make sure `.env.local` exists with `NEXT_PUBLIC_PRIVY_APP_ID` set to your 25-character App ID
+- Restart the dev server after changing environment variables. Next reads them at startup, and inlines them at build time, so a deployed build needs rebuilding too
+
+### "Embedded wallet is only available over HTTPS"
+- Privy only runs embedded wallets on `localhost` or over HTTPS, so deploy behind HTTPS rather than plain HTTP
 
 ### Google login not showing
 - Verify Google OAuth is enabled in your Privy Dashboard
@@ -169,4 +182,8 @@ You can customize Privy behavior in `app/providers.tsx`:
 
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Privy Documentation](https://docs.privy.io/)
-- [Privy React Guide](https://docs.privy.io/guide/react)
+- [Privy React Guide](https://docs.privy.io/basics/react/installation)
+
+## License
+
+MIT — see [LICENSE](LICENSE).
