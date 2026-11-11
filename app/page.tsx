@@ -1,40 +1,16 @@
 "use client";
 
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useMemo } from "react";
-
-interface PrivyResponseData {
-  user: {
-    id: string;
-    createdAt: string;
-    linkedAccounts: unknown[];
-    wallet: unknown;
-    google: unknown;
-    email: unknown;
-    twitter: unknown;
-    apple: unknown;
-    discord: unknown;
-    github: unknown;
-    customMetadata: unknown;
-  };
-  wallets: Array<{
-    address: string;
-    chainType: string;
-    walletClientType: string;
-    connectorType: string;
-  }>;
-  authenticated: boolean;
-  ready: boolean;
-}
+import { useEffect, useMemo } from "react";
 
 export default function Home() {
   const { ready, authenticated, user, login, logout } = usePrivy();
   const { wallets, ready: walletsReady } = useWallets();
 
   // Compute response data whenever user state changes
-  const loginResponse = useMemo<PrivyResponseData | null>(() => {
+  const loginResponse = useMemo(() => {
     if (ready && authenticated && user) {
-      const responseData: PrivyResponseData = {
+      const responseData = {
         user: {
           id: user.id,
           createdAt: user.createdAt,
@@ -51,7 +27,7 @@ export default function Home() {
         wallets: walletsReady
           ? wallets.map((w) => ({
               address: w.address,
-              chainType: w.chainType,
+              type: w.type,
               walletClientType: w.walletClientType,
               connectorType: w.connectorType,
             }))
@@ -59,11 +35,19 @@ export default function Home() {
         authenticated,
         ready,
       };
-      console.log("=== PRIVY RESPONSE DATA ===", responseData);
       return responseData;
     }
     return null;
   }, [ready, authenticated, user, wallets, walletsReady]);
+
+  // The response holds the user's email, Google identity and wallet
+  // addresses. Logging it is useful while you're building and a leak once
+  // you've shipped, so it only happens in development.
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development" && loginResponse) {
+      console.log("=== PRIVY RESPONSE DATA ===", loginResponse);
+    }
+  }, [loginResponse]);
 
   if (!ready) {
     return (
@@ -193,7 +177,7 @@ export default function Home() {
                             Chain Type:
                           </span>{" "}
                           <span className="text-zinc-600 dark:text-zinc-400">
-                            {wallet.chainType}
+                            {wallet.type}
                           </span>
                         </div>
                         <div>
